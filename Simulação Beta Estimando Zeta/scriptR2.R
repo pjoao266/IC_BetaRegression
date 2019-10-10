@@ -4,7 +4,7 @@ require(rstan)
 set.seed(2018)
 
 # Gerando dados de uma distribuição de uma regressão:
-n = 1000 # tamanho amostral
+n = 5000 # tamanho amostral
 x1 = rbinom(n,1,0.5) # covariável 1
 x2 = runif(n,-1,1) # covariável 2
 beta0_real = 1 # intercepto real
