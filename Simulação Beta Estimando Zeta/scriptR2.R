@@ -4,7 +4,7 @@ require(rstan)
 set.seed(2018)
 
 # Gerando dados de uma distribuição de uma regressão:
-n = 100 # tamanho amostral
+n = 1000 # tamanho amostral
 x1 = rbinom(n,1,0.5) # covariável 1
 x2 = runif(n,-1,1) # covariável 2
 beta0_real = 1 # intercepto real
@@ -52,14 +52,18 @@ lines(density(y),lwd=2,col="red")
 m0 = 0; v0 = 10
 m1 = 0; v1 = 10
 m2 = 0; v2 = 10
-mg0 = 0; vg0 = 10
-mg1 = 0; vg1 = 10
-mg2 = 0; vg2 = 10
+mg0 = 10; vg0 = 0.1
+mg1 = 10; vg1 = 0.1
+mg2 = 10; vg2 = 0.1
 # Densidades de probabilidade a priori.
 # Expressa a opinião do pesquisador sobre mu e sigma2
 # antes de observar os dados.
 beta0 = seq(-10,10,0.1)
+beta1 = seq(-10,10,0.1)
+beta2 = seq(-10,10,0.1)
 gama0 = seq(-10,10,0.1)
+gama1 = seq(-10,10,0.1)
+gama2 = seq(-10,10,0.1)
 dm = dnorm(beta0,m0,sqrt(v0))
 ds = dnorm(gama0,mg0,sqrt(vg0))
 par(mfrow=c(1,2))
@@ -77,8 +81,8 @@ init[[1]] = list(beta0=0,beta1=0,beta2=0,gama0=0,gama1=0,gama2=0)
 
 
 # Aspectos relacionados ao algorítmo
-iter = 100 # total de iterações (incluindo warm-up).
-warmup = 50
+iter = 10000 # total de iterações (incluindo warm-up).
+warmup = 5000
 chains = 1
 
 output = stan(file = "scriptSTAN2.stan", data=data, 
@@ -111,8 +115,6 @@ plot(sgama1,type="l",ylab="gama1",xlab="iterações",cex.lab=1.5,cex.axis=1.5)
 abline(h=gama1_real,lwd=2,col="red")
 plot(sgama2,type="l",ylab="gama2",xlab="iterações",cex.lab=1.5,cex.axis=1.5)
 abline(h=gama2_real,lwd=2,col="red")
-plot(szeta,type="l",ylab="zeta",xlab="iterações",cex.lab=1.5,cex.axis=1.5)
-abline(h=zeta_real,lwd=2,col="red")
 
 # Densidades a posteriori.
 par(mfrow=c(1,2))
@@ -138,8 +140,6 @@ plot(gama1,ds,type="l",lwd=2,col="blue",ylab="densidade",cex.lab=2,cex.axis=2,yl
 lines(density(sgama1),lwd=2,main="Desnidade a posteriori mu",col="red")
 plot(gama2,ds,type="l",lwd=2,col="blue",ylab="densidade",cex.lab=2,cex.axis=2,ylim=c(0,3.5))
 lines(density(sgama2),lwd=2,main="Desnidade a posteriori mu",col="red")
-plot(zeta,type="l",ds,lwd=2,col="blue",ylab="densidade",cex.lab=2,cex.axis=2,ylim=c(0,2))
-lines(density(szeta),lwd=2,main="Densidade a posteriori zeta",col="red")
 
 require(coda)
 # Estimativa intervalar (intervalo de credibilidade HPD - High Posterior Density)
@@ -159,19 +159,18 @@ hpd6 = HPDinterval(gama2_mcmc, prob=0.95)
 hpd7 = HPDinterval(zeta_mcmc, prob=0.95)
 
 # Estimativas pontuais
-est1 = c(mean(sbeta0),median(sbeta0),var(sbeta0),sd(sbeta0),hpd1[1:2])
-est2 = c(mean(sbeta1),median(sbeta1),var(sbeta1),sd(sbeta1),hpd2[1:2])
-est3 = c(mean(sbeta2),median(sbeta2),var(sbeta2),sd(sbeta2),hpd3[1:2])
+est1 = c(mean(sbeta0),beta0_real,median(sbeta0),var(sbeta0),sd(sbeta0),hpd1[1:2])
+est2 = c(mean(sbeta1),beta1_real,median(sbeta1),var(sbeta1),sd(sbeta1),hpd2[1:2])
+est3 = c(mean(sbeta2),beta2_real,median(sbeta2),var(sbeta2),sd(sbeta2),hpd3[1:2])
 
-est4 = c(mean(sgama0),median(sgama0),var(sgama0),sd(sgama0),hpd4[1:2])
-est5 = c(mean(sgama1),median(sgama1),var(sgama1),sd(sgama1),hpd5[1:2])
-est6 = c(mean(sgama2),median(sgama2),var(sgama2),sd(sgama2),hpd6[1:2])
+est4 = c(mean(sgama0),gama0_real,median(sgama0),var(sgama0),sd(sgama0),hpd4[1:2])
+est5 = c(mean(sgama1),gama1_real,median(sgama1),var(sgama1),sd(sgama1),hpd5[1:2])
+est6 = c(mean(sgama2),gama2_real,median(sgama2),var(sgama2),sd(sgama2),hpd6[1:2])
 
 est7 = c(mean(szeta),median(szeta),var(szeta),sd(szeta),hpd7[1:2])
-
-tab = rbind(est1,est2)
-colnames(tab) = c("M�dia","Mediana","Variância","Desvio_Padrão","HPD_inf","HPD_sup")
-rownames(tab) = c("beta0","zeta")
+tab = rbind(est1,est2,est3,est4,est5,est6)
+colnames(tab) = c("M�dia","VR","Mediana","Vari�ncia","Desvio_Padr�o","HPD_inf","HPD_sup")
+rownames(tab) = c("beta0","beta1","beta2","gama0","gama1","gama2")
 tab
 
 
